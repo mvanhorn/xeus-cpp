@@ -66,6 +66,28 @@ class StreamRedirectRAII {
         std::stringstream ss;
 };
 
+namespace
+{
+    void require_inspect_data(const nl::json& data, const std::string& inspect_result)
+    {
+        REQUIRE(data["text/plain"] == inspect_result);
+
+        const std::string html_content = data["text/html"].get<std::string>();
+        const std::string anchor_href = "href=\"" + inspect_result + "\"";
+        const std::string iframe_src = "<iframe class=\"xcpp-iframe-pager\" src=\""
+                                       + inspect_result + "?action=purge\"";
+
+        REQUIRE(html_content.find(anchor_href) != std::string::npos);
+        REQUIRE(html_content.find("target=\"_blank\"") != std::string::npos);
+        REQUIRE(html_content.find("rel=\"noopener\"") != std::string::npos);
+        REQUIRE(
+            html_content.find("Open documentation for this symbol in a new tab")
+            != std::string::npos
+        );
+        REQUIRE(html_content.find(iframe_src) != std::string::npos);
+    }
+}
+
 TEST_SUITE("execute_request")
 {
     TEST_CASE("stl")
@@ -208,7 +230,7 @@ TEST_SUITE("execute_request")
             user_expressions
         );
         nl::json result = future.get();
-        REQUIRE(result["payload"][0]["data"]["text/plain"] == inspect_result);
+        require_inspect_data(result["payload"][0]["data"], inspect_result);
         REQUIRE(result["user_expressions"] == nl::json::object());
         REQUIRE(result["status"] == "ok");
     }
@@ -243,7 +265,7 @@ TEST_SUITE("execute_request")
             user_expressions
         );
         nl::json result = future.get();
-        REQUIRE(result["payload"][0]["data"]["text/plain"] == inspect_result);
+        require_inspect_data(result["payload"][0]["data"], inspect_result);
         REQUIRE(result["user_expressions"] == nl::json::object());
         REQUIRE(result["status"] == "ok");
     }
@@ -278,7 +300,7 @@ TEST_SUITE("execute_request")
             user_expressions
         );
         nl::json result = future.get();
-        REQUIRE(result["payload"][0]["data"]["text/plain"] == inspect_result);
+        require_inspect_data(result["payload"][0]["data"], inspect_result);
         REQUIRE(result["user_expressions"] == nl::json::object());
         REQUIRE(result["status"] == "ok");
     }
@@ -313,7 +335,7 @@ TEST_SUITE("execute_request")
             user_expressions
         );
         nl::json result = future.get();
-        REQUIRE(result["payload"][0]["data"]["text/plain"] == inspect_result);
+        require_inspect_data(result["payload"][0]["data"], inspect_result);
         REQUIRE(result["user_expressions"] == nl::json::object());
         REQUIRE(result["status"] == "ok");
     }
@@ -369,6 +391,10 @@ TEST_SUITE("inspect_request")
         );
 
         REQUIRE(result["found"] == true);
+        require_inspect_data(
+            result["data"],
+            "https://en.cppreference.com/w/cpp/container/vector"
+        );
         REQUIRE(result["status"] == "ok");
     }
 
@@ -963,6 +989,13 @@ TEST_SUITE("complete_request")
 }
 
 TEST_SUITE("xinspect"){
+    TEST_CASE("build_inspect_data_contains_fallback_anchor_and_iframe"){
+        std::string inspect_result = "https://en.cppreference.com/w/cpp/container/vector";
+        nl::json data = xcpp::build_inspect_data(inspect_result);
+
+        require_inspect_data(data, inspect_result);
+    }
+
     TEST_CASE("class_member_predicate_get_filename"){
         xcpp::class_member_predicate cmp;
         cmp.class_name = "TestClass";

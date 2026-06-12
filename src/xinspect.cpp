@@ -212,7 +212,22 @@ namespace xcpp
             height: 100%;
             border: none;
         }
+        .xcpp-inspect-fallback {
+            display: block;
+            padding: 0.5em 0.75em;
+            margin: 0 0 0.5em 0;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            color: #0969da;
+            text-decoration: none;
+        }
+        .xcpp-inspect-fallback:hover {
+            text-decoration: underline;
+        }
         </style>
+        <a class="xcpp-inspect-fallback" href=")"
+                                   + inspect_result
+                                   + R"(" target="_blank" rel="noopener">Open documentation for this symbol in a new tab</a>
         <iframe class="xcpp-iframe-pager" src=")"
                                    + inspect_result + R"(?action=purge"></iframe>)";
 
